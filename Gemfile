@@ -5,5 +5,6 @@ gem 'lita'
 
 group :development, :test do
   gem 'foreman'
+  gem 'pry'
 end
 

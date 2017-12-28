@@ -1,6 +1,6 @@
 Lita.configure do |config|
   # The name your robot will use.
-  config.robot.name = 'KenpoBot'
+  config.robot.name = 'Kenpo Bot'
 
   # The locale code for the language to use.
   # config.robot.locale = :en
@@ -24,8 +24,8 @@ Lita.configure do |config|
   # config.adapter.password = "secret"
 
   ## Example: Set options for the Redis connection.
-  # config.redis.host = "127.0.0.1"
-  # config.redis.port = 1234
+  config.redis[:host] = ENV.fetch('REDIS_HOST', '127.0.0.1')
+  config.redis[:port] = 6379
 
   ## Example: Set configuration for any loaded handlers. See the handler's
   ## documentation for options.
