@@ -1,0 +1,19 @@
+version: '3'
+services:
+  redis:
+    build:
+      context: .
+      dockerfile: ./docker/redis/Dockerfile
+  ruby:
+    build:
+      context: .
+      dockerfile: ./docker/ruby/Dockerfile
+    volumes:
+      - .:/bot_kenpo
+    depends_on:
+      - redis
+    command: lita
+    environment:
+      - REDIS_HOST=redis
+    tty: true
+    stdin_open: true
