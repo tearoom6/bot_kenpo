@@ -1,6 +1,6 @@
 # lita-kenpo
 
-TODO: Add a description of the plugin.
+Concierge to assist your reservation to its-kenpo.
 
 ## Installation
 
@@ -12,8 +12,5 @@ gem "lita-kenpo"
 
 ## Configuration
 
-TODO: Describe any configuration attributes the plugin exposes.
+Bug reports and pull requests are welcome on GitHub at https://github.com/tearoom6/bot_kenpo.
 
-## Usage
-
-TODO: Describe the plugin's features and how to use them.

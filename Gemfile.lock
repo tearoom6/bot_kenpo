@@ -1,3 +1,9 @@
+PATH
+  remote: lita-kenpo
+  specs:
+    lita-kenpo (0.1.0)
+      lita (>= 4.7)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -58,6 +64,7 @@ PLATFORMS
 DEPENDENCIES
   foreman
   lita
+  lita-kenpo!
   lita-slack
   pry
 
