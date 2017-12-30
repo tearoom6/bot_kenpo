@@ -9,5 +9,10 @@ gem 'kenpo_api'
 group :development, :test do
   gem 'foreman'
   gem 'pry'
+  # Use Capistrano for deployment
+  gem 'capistrano'
+  gem 'capistrano-bundler'
+  gem 'capistrano-rbenv'
+  gem 'capistrano-rbenv-vars'
 end
 
