@@ -13,7 +13,8 @@ services:
     depends_on:
       - redis
     command: lita
-    environment:
-      - REDIS_HOST=redis
+    env_file:
+      - ./.dockerenv
+      - ./.dockerenv.secrets
     tty: true
     stdin_open: true
