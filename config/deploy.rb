@@ -71,6 +71,16 @@ namespace :deploy do
     end
   end
 
+  desc 'Restart Lita.'
+  task :restart_lita do
+    on roles(:app) do
+      within current_path do
+        execute :bundle, "exec lita start -k -d -p #{shared_path}/tmp/pids/lita.pid -l #{shared_path}/log/lita.log"
+      end
+    end
+  end
+
   before :starting, :confirm
+  after :finishing, :restart_lita
 end
 
