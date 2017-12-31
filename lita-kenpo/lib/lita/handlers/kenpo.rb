@@ -162,18 +162,22 @@ module Lita
       end
 
       def send_attachment(payload:, message:, attachment:)
-        attachment = Lita::Adapters::Slack::Attachment.new(message, attachment)
-        room = Lita::Room.find_by_id(payload.room_id)
-        user = Lita::User.find_by_id(payload.user_id)
-        target = room || user
-        robot.chat_service.send_attachments(target, attachment)
+        message_body = compose_message_body(message: message, attachments: [attachment])
+        http.post(payload.response_url, message_body, {'Content-Type' => 'application/json'})
       end
 
       def send_message(payload:, message:)
-        room = Lita::Room.find_by_id(payload.room_id)
-        user = Lita::User.find_by_id(payload.user_id)
-        target = Lita::Source.new(room: room, user: user)
-        robot.send_message(target, message)
+        message_body = compose_message_body(message: message)
+        http.post(payload.response_url, message_body, {'Content-Type' => 'application/json'})
+      end
+
+      def compose_message_body(message:, attachments:[], response_type: :in_channel, replace_original: true)
+        {
+          text: message,
+          attachments: attachments,
+          response_type: response_type,
+          replace_original: replace_original,
+        }.to_json
       end
 
       def compose_attachment_with_menu(question:, fallback:'Something wrong...', color:'#4083bc', callback_id:, name:, placeholder:'Choose...', options:[])
