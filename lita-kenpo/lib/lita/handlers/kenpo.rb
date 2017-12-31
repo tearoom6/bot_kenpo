@@ -125,13 +125,13 @@ module Lita
         categories = KenpoApi::ServiceCategory.list
         options = categories.map{|category| compose_option(text: category.name, value: category.category_code)}
         options << {text: 'Cancel', value: :cancel}
-        form = compose_form_with_menu(
+        attachment = compose_attachment_with_menu(
           question: 'Choose the service to want.',
           callback_id: :category_selection,
           name: 'category',
           options: options,
         )
-        attachment = Lita::Adapters::Slack::Attachment.new('What service do you want?', form)
+        attachment = Lita::Adapters::Slack::Attachment.new('What service do you want?', attachment)
         robot.chat_service.send_attachments(response.room, attachment)
       end
 
@@ -139,30 +139,30 @@ module Lita
         resort_names = KenpoApi::Resort.resort_names
         options = resort_names.map{|resort_name| compose_option(text: resort_name, value: resort_name)}
         options << {text: 'Cancel', value: :cancel}
-        form = compose_form_with_menu(
+        attachment = compose_attachment_with_menu(
           question: 'Choose resort to apply reservation for.',
           callback_id: :resort_selection,
           name: 'service_group',
           options: options,
         )
-        send_attachment(payload: payload, message: 'What resort do you want?', form: form)
+        send_attachment(payload: payload, message: 'What resort do you want?', attachment: attachment)
       end
 
       def show_sports(session, payload)
         sport_names = KenpoApi::Sport.sport_names
         options = sport_names.map{|sport_name| compose_option(text: sport_name, value: sport_name)}
         options << {text: 'Cancel', value: :cancel}
-        form = compose_form_with_menu(
+        attachment = compose_attachment_with_menu(
           question: 'Choose sport facility to apply reservation for.',
           callback_id: :sport_selection,
           name: 'service_group',
           options: options,
         )
-        send_attachment(payload: payload, message: 'What sport facility do you want?', form: form)
+        send_attachment(payload: payload, message: 'What sport facility do you want?', attachment: attachment)
       end
 
-      def send_attachment(payload:, message:, form:)
-        attachment = Lita::Adapters::Slack::Attachment.new(message, form)
+      def send_attachment(payload:, message:, attachment:)
+        attachment = Lita::Adapters::Slack::Attachment.new(message, attachment)
         room = Lita::Room.find_by_id(payload.room_id)
         user = Lita::User.find_by_id(payload.user_id)
         target = room || user
@@ -176,8 +176,8 @@ module Lita
         robot.send_message(target, message)
       end
 
-      def compose_form_with_menu(question:, fallback:'Something wrong...', color:'#4083bc', callback_id:, name:, placeholder:'Choose...', options:[])
-        compose_form(question: question, fallback: fallback, color: color, callback_id: callback_id, actions: [
+      def compose_attachment_with_menu(question:, fallback:'Something wrong...', color:'#4083bc', callback_id:, name:, placeholder:'Choose...', options:[])
+        compose_attachment(question: question, fallback: fallback, color: color, callback_id: callback_id, actions: [
           {
             name: name,
             text: placeholder,
@@ -194,8 +194,8 @@ module Lita
         }
       end
 
-      def compose_form_with_buttons(question:, fallback:'Something wrong...', color:'#4083bc', callback_id:, buttons:[])
-        compose_form(question: question, fallback: fallback, color: color, callback_id: callback_id, actions: buttons)
+      def compose_attachment_with_buttons(question:, fallback:'Something wrong...', color:'#4083bc', callback_id:, buttons:[])
+        compose_attachment(question: question, fallback: fallback, color: color, callback_id: callback_id, actions: buttons)
       end
 
       def compose_button(name:, text:, value:, style: :default)
@@ -208,7 +208,7 @@ module Lita
         }
       end
 
-      def compose_form(question:, fallback:'Something wrong...', color:'#4083bc', callback_id:, actions:[])
+      def compose_attachment(question:, fallback:'Something wrong...', color:'#4083bc', callback_id:, actions:[])
         {
           text: question,
           fallback: fallback,
