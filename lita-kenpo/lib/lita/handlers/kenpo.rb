@@ -11,10 +11,21 @@ module Lita
           @user_id = user_id
         end
 
-        def self.session_for(redis:, user_id:, ttl: 60)
+        def self.start_session(redis:, user_id:, ttl: 60)
           instance = self.new(redis, user_id)
           instance.update_ttl(ttl: ttl)
           instance
+        end
+
+        def self.session_for(redis:, user_id:, ttl: 60)
+          instance = self.new(redis, user_id)
+          return nil unless instance.exists?
+          instance.update_ttl(ttl: ttl)
+          instance
+        end
+
+        def exists?
+          @redis.exists(@user_id)
         end
 
         def update_ttl(ttl: 60)
@@ -24,12 +35,16 @@ module Lita
           end
         end
 
-        def save(key, value)
-          @redis.hset(@user_id, key, value)
+        def save(field, value)
+          @redis.hset(@user_id, field, value)
         end
 
-        def get(key)
-          @redis.hget(@user_id, key)
+        def get(field)
+          @redis.hget(@user_id, field)
+        end
+
+        def get_all
+          @redis.hvals(@user_id)
         end
 
         def clear
@@ -83,7 +98,7 @@ module Lita
       route(/^start$/i, :on_start, help: { 'start' => 'Show menu.' })
       def on_start(response)
         show_menu(response)
-        Session.session_for(redis: redis, user_id: response.user&.id)
+        Session.start_session(redis: redis, user_id: response.user&.id)
       end
 
       http.post '/slack/endpoint/*', :on_request
@@ -91,6 +106,11 @@ module Lita
         log << "on_request called: #{rack_request.params['payload']}\n"
         payload = Payload.new(rack_request.params)
         session = Session.session_for(redis: redis, user_id: payload.user_id)
+
+        if session.nil?
+          send_message(payload: payload, message: 'Session expired. Please start again!')
+          return
+        end
 
         if payload.action_value == 'cancel'
           send_message(payload: payload, message: 'See you again!')
