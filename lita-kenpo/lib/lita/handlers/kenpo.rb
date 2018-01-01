@@ -5,6 +5,29 @@ require 'kenpo_api'
 module Lita
   module Handlers
     class Kenpo < Handler
+      RESORT_RESERVE_STEPS = {
+        email:         'Input your email address to receive application url for.',
+        url:           'Check the email & Input the application url.',
+        sign_no:       'Input your sign number.',
+        insured_no:    'Input your insured number.',
+        office_name:   'Input your office name.',
+        kana_name:     'Input your name in Katakana.',
+        birth_year:    'Input your birth year.',
+        birth_month:   'Input your birth month.',
+        birth_day:     'Input your birth day of the month.',
+        gender:        'Input your gender.',
+        relationship:  'Input your relationship to the insured person.',
+        contact_phone: 'Input your phone number.',
+        postal_code:   'Input your postal code.',
+        state:         'Input your state.',
+        address:       'Input your address.',
+      }
+      SPORT_RESERVE_STEPS = {
+        email: 'Input your email address to receive application url for.',
+        url:   'Check the email & Input the application url.',
+        # TODO: - Not implemented.
+      }
+
       class Session
         def initialize(redis, user_id)
           @redis = redis
@@ -94,9 +117,16 @@ module Lita
         log << "on_message called: #{payload}\n"
         message = payload[:message]
         user_id = message.source.user.id
+        body = message.body
 
         session = Session.session_for(redis: redis, user_id: user_id)
         unless session.nil?
+          next_message = go_to_next_step(session, body)
+          if next_message.nil?
+            robot.send_message(message.source, 'I have received your application! Thank you!')
+          else
+            robot.send_message(message.source, next_message)
+          end
           return
         end
 
@@ -129,6 +159,10 @@ module Lita
         case payload.callback_id
         when :category_selection
           on_category_select(session, payload)
+        when :resort_selection
+          on_resort_select(session, payload)
+        when :sport_selection
+          on_sport_select(session, payload)
         end
       end
 
@@ -137,7 +171,7 @@ module Lita
       private
 
       def on_category_select(session, payload)
-        session.save('service_category', payload.action_value)
+        session.save(:service_category, payload.action_value)
 
         case payload.action_value.to_sym
         when :resort_reserve, :resort_search_vacant
@@ -145,7 +179,67 @@ module Lita
         when :sport_reserve
           show_sports(session, payload)
         else
+          # TODO: - Not implemented.
           send_message(payload: payload, message: "This feature is not implemented yet. Please contribute to the development.\nhttps://github.com/tearoom6/bot_kenpo")
+        end
+      end
+
+      def on_resort_select(session, payload)
+        session.save(:service, payload.action_value)
+
+        case session.get(:service_category).to_sym
+        when :resort_reserve
+          step, message = RESORT_RESERVE_STEPS.first
+          send_message(payload: payload, message: message)
+          session.save(:step, step)
+        when :resort_search_vacant
+          # TODO: - Not implemented.
+        end
+      end
+
+      def on_sport_select(session, payload)
+        session.save(:service, payload.action_value)
+
+        case session.get(:service_category).to_sym
+        when :sport_reserve
+          step, message = SPORT_RESERVE_STEPS.first
+          send_message(payload: payload, message: message)
+          session.save(:step, step)
+        end
+      end
+
+      def go_to_next_step(session, body)
+        service_category = session.get(:service_category).to_sym
+        step = session.get(:step).to_sym
+        handle_step(service_category, step, session, body)
+
+        next_step, message = next_step(service_category, step)
+        return nil if next_step.nil?
+        session.save(:step, next_step)
+        message
+      end
+
+      def handle_step(service_category, step, session, body)
+        # TODO: - Not implemented.
+        session.save(step, body)
+      end
+
+      def next_step(service_category, current_step)
+        steps = steps(service_category)
+
+        index = steps.find_index{|key, _| key == current_step.to_sym}
+        keys = steps.keys
+        return nil if index >= keys.size
+        values = steps.values
+        [keys[index], values[index]]
+      end
+
+      def steps(service_category)
+        case service_category.to_sym
+        when :resort_reserve
+          RESORT_RESERVE_STEPS
+        when :sport_reserve
+          SPORT_RESERVE_STEPS
         end
       end
 
