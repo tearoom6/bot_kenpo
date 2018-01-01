@@ -89,9 +89,17 @@ module Lita
         end
       end
 
-      on :unhandled_message, :show_help
-      def show_help(payload)
+      on :unhandled_message, :on_message
+      def on_message(payload)
+        log << "on_message called: #{payload}\n"
         message = payload[:message]
+        user_id = message.source.user.id
+
+        session = Session.session_for(redis: redis, user_id: user_id)
+        unless session.nil?
+          return
+        end
+
         robot.send_message(message.source, "Try 'help' for a list of available commands.")
       end
 
