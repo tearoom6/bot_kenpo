@@ -360,6 +360,9 @@ module Lita
       end
 
       def show_menu(response)
+        source = Lita::Source.new(user: response.user, room: response.room)
+        robot.send_message(source, t('messages.info'))
+
         categories = KenpoApi::ServiceCategory.list
         options = categories.map{|category| compose_option(text: category.name, value: category.category_code)}
         options << {text: t('words.cancel'), value: :cancel}

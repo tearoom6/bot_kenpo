@@ -40,6 +40,7 @@ en:
           not_yet:       "This feature is not implemented yet. Please contribute to the development.\nhttps://github.com/tearoom6/bot_kenpo"
           fallback:      'Something wrong...'
           placeholder:   'Choose...'
+          info:          "Hello! I'm Kenpo Bot. \nWe DO NOT view or utilize privacy data you input. I do the best for the data security. But if hackers access to the data illegally and leak them, we take no responsibility for that. Use this service with knowing that."
         questions:
           menu:          'Choose the service to want.'
           resort:        'Choose resort to apply reservation for.'
