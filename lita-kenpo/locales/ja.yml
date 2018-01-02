@@ -1,0 +1,55 @@
+ja:
+  lita:
+    handlers:
+      kenpo:
+        step_messages:
+          email:         '予約用URLを受け取るためのメールアドレスを入力して下さい。'
+          url:           'Eメールをチェックし、その中に書いてある予約用URLを入力して下さい。'
+          sign_no:       '保険証記号を入力して下さい。'
+          insured_no:    '保険証番号を入力して下さい。'
+          office_name:   '事業者名を入力して下さい。'
+          kana_name:     'カナ氏名を入力して下さい。'
+          birth_year:    '生まれ年を入力して下さい。'
+          birth_month:   '生まれ月を入力して下さい。'
+          birth_day:     '生まれ日を入力して下さい。'
+          gender:        '性別を入力して下さい。'
+          relationship:  '保険者との関係を入力して下さい。'
+          contact_phone: '連絡先電話番号を入力して下さい。'
+          postal_code:   '郵便番号を入力して下さい。'
+          state:         '都道府県を入力して下さい。'
+          address:       '住所を入力して下さい。'
+          join_time:     '利用開始日を入力して下さい。'
+          night_count:   '泊数を入力して下さい。'
+          stay_persons:  '利用人数を入力して下さい。'
+          use_time_from: '利用開始時を入力して下さい。'
+          use_time_to:   '利用終了時を入力して下さい。'
+          confirm:       '入力内容に問題がないか確認して下さい。'
+        messages:
+          confirm:       '確定してもよろしいでしょうか？'
+          review:        '入力内容に問題がないか確認して下さい。'
+          complete:      '申請を受け付けました!'
+          menu:          'どのサービスをご利用されますか？'
+          resort:        'どの施設をご利用されますか？'
+          sport:         'どの施設をご利用されますか？'
+          help:          "'help'と入力することでヘルプを表示できます。"
+          invalid:       '入力内容に問題がありました。'
+          error:         'エラーが発生しました。再度入力して下さい。'
+          expired:       'タイムアウトしました。最初からやり直して下さい。'
+          cancel:        'またのご利用をお待ちしてます！'
+          unavailable:   '現在はご利用できません。'
+          not_yet:       "この機能はまだ実装されていません。開発に協力してくださる方をお待ちしています。\nhttps://github.com/tearoom6/bot_kenpo"
+          fallback:      'エラーが発生しました。'
+          placeholder:   '選択して下さい'
+          info:          "こんにちは。Kenpo Bot です。\n当方が入力された個人情報を閲覧・利用することは一切ありません。セキュリティには万全を期していますが、万が一、不正アクセスによる漏洩が起きた場合には責任は負いませんので、ご了承の上、ご利用下さい。"
+        questions:
+          menu:          'ご利用のサービスを選んで下さい。'
+          resort:        'ご利用の施設を選んで下さい。'
+          sport:         'ご利用の施設を選んで下さい。'
+        words:
+          choose:        'いずれかを選択'
+          refer_to:      '参照'
+          ok:            'OK'
+          cancel:        'キャンセル'
+        helps:
+          start:         'メニューを表示'
+

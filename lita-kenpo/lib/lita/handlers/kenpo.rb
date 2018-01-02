@@ -6,44 +6,44 @@ module Lita
   module Handlers
     class Kenpo < Handler
       RESORT_RESERVE_STEPS = {
-        email:         'Input your email address to receive application url for.',
-        url:           'Check the email & Input the application url.',
-        sign_no:       'Input your sign number.',
-        insured_no:    'Input your insured number.',
-        office_name:   'Input your office name.',
-        kana_name:     'Input your name in Katakana.',
-        birth_year:    'Input your birth year.',
-        birth_month:   'Input your birth month.',
-        birth_day:     'Input your birth day of the month.',
-        gender:        'Input your gender.',
-        relationship:  'Input your relationship to the insured person.',
-        contact_phone: 'Input your phone number.',
-        postal_code:   'Input your postal code.',
-        state:         'Input your state.',
-        address:       'Input your address.',
-        join_time:     'Input join day.',
-        night_count:   'Input night count.',
-        stay_persons:  'Input staying person count.',
-        confirm:       'Are you sure to apply reservation?',
+        email:         t('step_messages.email'),
+        url:           t('step_messages.url'),
+        sign_no:       t('step_messages.sign_no'),
+        insured_no:    t('step_messages.insured_no'),
+        office_name:   t('step_messages.office_name'),
+        kana_name:     t('step_messages.kana_name'),
+        birth_year:    t('step_messages.birth_year'),
+        birth_month:   t('step_messages.birth_month'),
+        birth_day:     t('step_messages.birth_day'),
+        gender:        t('step_messages.gender'),
+        relationship:  t('step_messages.relationship'),
+        contact_phone: t('step_messages.contact_phone'),
+        postal_code:   t('step_messages.postal_code'),
+        state:         t('step_messages.state'),
+        address:       t('step_messages.address'),
+        join_time:     t('step_messages.join_time'),
+        night_count:   t('step_messages.night_count'),
+        stay_persons:  t('step_messages.stay_persons'),
+        confirm:       t('step_messages.confirm'),
       }
       SPORT_RESERVE_STEPS = {
-        email:         'Input your email address to receive application url for.',
-        url:           'Check the email & Input the application url.',
-        sign_no:       'Input your sign number.',
-        insured_no:    'Input your insured number.',
-        office_name:   'Input your office name.',
-        kana_name:     'Input your name in Katakana.',
-        birth_year:    'Input your birth year.',
-        birth_month:   'Input your birth month.',
-        birth_day:     'Input your birth day of the month.',
-        contact_phone: 'Input your phone number.',
-        postal_code:   'Input your postal code.',
-        state:         'Input your state.',
-        address:       'Input your address.',
-        join_time:     'Input join day.',
-        use_time_from: 'Input start time.',
-        use_time_to:   'Input end time.',
-        confirm:       'Are you sure to apply reservation?',
+        email:         t('step_messages.email'),
+        url:           t('step_messages.url'),
+        sign_no:       t('step_messages.sign_no'),
+        insured_no:    t('step_messages.insured_no'),
+        office_name:   t('step_messages.office_name'),
+        kana_name:     t('step_messages.kana_name'),
+        birth_year:    t('step_messages.birth_year'),
+        birth_month:   t('step_messages.birth_month'),
+        birth_day:     t('step_messages.birth_day'),
+        contact_phone: t('step_messages.contact_phone'),
+        postal_code:   t('step_messages.postal_code'),
+        state:         t('step_messages.state'),
+        address:       t('step_messages.address'),
+        join_time:     t('step_messages.join_time'),
+        use_time_from: t('step_messages.use_time_from'),
+        use_time_to:   t('step_messages.use_time_to'),
+        confirm:       t('step_messages.confirm'),
       }
 
       class Session
@@ -138,6 +138,7 @@ module Lita
       on :unhandled_message, :on_message
       def on_message(payload)
         log << "on_message called: #{payload}\n"
+        I18n.locale = ENV.fetch('LANG', 'en')
         message = payload[:message]
         user_id = message.source.user.id
         body = message.body
@@ -147,9 +148,9 @@ module Lita
           unless session.nil?
             next_message = go_to_next_step(session, body)
             if next_message.nil?
-              robot.send_message(message.source, 'I have received your application! Thank you!')
+              robot.send_message(message.source, t('messages.complete'))
             elsif next_message.is_a?(Hash)
-              attachment = Lita::Adapters::Slack::Attachment.new('Are you sure to apply reservation?', next_message)
+              attachment = Lita::Adapters::Slack::Attachment.new(t('messages.confirm'), next_message)
               robot.chat_service.send_attachments(message.room_object, attachment)
             else
               robot.send_message(message.source, next_message)
@@ -157,14 +158,15 @@ module Lita
             return
           end
 
-          robot.send_message(message.source, "Try 'help' for a list of available commands.")
+          robot.send_message(message.source, t('messages.help'))
         rescue
-          robot.send_message(message.source, 'Something wrong. Please try again.')
+          robot.send_message(message.source, t('messages.error'))
         end
       end
 
-      route(/^start$/i, :on_start, help: { 'start' => 'Show menu.' })
+      route(/^start$/i, :on_start, help: { 'start' => t('helps.start') })
       def on_start(response)
+        I18n.locale = ENV.fetch('LANG', 'en')
         show_menu(response)
         Session.start_session(redis: redis, user_id: response.user&.id)
       end
@@ -172,16 +174,17 @@ module Lita
       http.post '/slack/endpoint/*', :on_request
       def on_request(rack_request, rack_response)
         log << "on_request called: #{rack_request.params['payload']}\n"
+        I18n.locale = ENV.fetch('LANG', 'en')
         payload = Payload.new(rack_request.params)
         session = Session.session_for(redis: redis, user_id: payload.user_id)
 
         if session.nil?
-          send_message(payload: payload, message: 'Session expired. Please start again!')
+          send_message(payload: payload, message: t('messages.expired'))
           return
         end
 
         if payload.action_menu_value == 'cancel'
-          send_message(payload: payload, message: 'See you again!')
+          send_message(payload: payload, message: t('messages.cancel'))
           session.clear
           return
         end
@@ -211,13 +214,14 @@ module Lita
         when :sport_reserve
           show_sports(session, payload)
         else
-          send_message(payload: payload, message: "This feature is not implemented yet. Please contribute to the development.\nhttps://github.com/tearoom6/bot_kenpo")
+          # TODO: - Not implemented.
+          send_message(payload: payload, message: t('messages.not_yet'))
         end
       end
 
       def on_resort_select(session, payload)
         session.save(:service, payload.action_menu_value)
-        check_service_availability(session)
+        check_service_availability(session, payload.action_menu_value)
 
         case session.get(:service_category).to_sym
         when :resort_reserve
@@ -226,7 +230,7 @@ module Lita
           session.save(:step, step)
         when :resort_search_vacant
           # TODO: - Not implemented.
-          send_message(payload: payload, message: "This feature is not implemented yet. Please contribute to the development.\nhttps://github.com/tearoom6/bot_kenpo")
+          send_message(payload: payload, message: t('messages.not_yet'))
         end
       rescue => e
         send_message(payload: payload, message: e.message)
@@ -235,7 +239,7 @@ module Lita
 
       def on_sport_select(session, payload)
         session.save(:service, payload.action_menu_value)
-        check_service_availability(session)
+        check_service_availability(session, payload.action_menu_value)
 
         case session.get(:service_category).to_sym
         when :sport_reserve
@@ -248,10 +252,10 @@ module Lita
         session.clear
       end
 
-      def check_service_availability(session)
+      def check_service_availability(session, service_name)
         category = KenpoApi::ServiceCategory.find(session.get(:service_category).to_sym)
-        group = KenpoApi::ServiceGroup.find(category, session.get(:service))
-        raise 'Service unavailable.' unless group.available?
+        group = KenpoApi::ServiceGroup.find(category, service_name)
+        raise t('messages.unavailable') unless group&.available?
       end
 
       def go_to_next_step(session, body)
@@ -265,24 +269,24 @@ module Lita
         session.save(:step, next_step)
 
         if next_step == :confirm
-          return compose_attachment_with_buttons(question:'Review the application data below:', callback_id: :review, buttons:[
-            compose_button(name: :ok,     text: 'OK',     value: :ok,     style: :danger),
-            compose_button(name: :cancel, text: 'Cancel', value: :cancel, style: :default),
+          return compose_attachment_with_buttons(question:t('messages.review'), callback_id: :review, buttons:[
+            compose_button(name: :ok,     text: t('words.ok'),     value: :ok,     style: :danger),
+            compose_button(name: :cancel, text: t('words.cancel'), value: :cancel, style: :default),
           ])
         end
 
         if next_criteria = criteria[next_step]
-          message += "\nChoise: #{next_criteria.to_s}"
+          message += "\n#{t('words.choose')}: #{next_criteria.to_s}"
         end
         if next_step == :state
-          message += "\nSee: http://nlftp.mlit.go.jp/ksj/gml/codelist/PrefCd.html"
+          message += "\n#{t('words.refer_to')}: http://nlftp.mlit.go.jp/ksj/gml/codelist/PrefCd.html"
         end
         message
       end
 
       def handle_step(service_category, step, session, body, criteria)
         if step_criteria = criteria[step]
-          raise 'Invalid input value.' unless step_criteria.include?(body)
+          raise t('messages.invalid') unless step_criteria.include?(body)
         end
 
         case step
@@ -318,7 +322,7 @@ module Lita
 
       def on_confirm(session, payload)
         if payload.action_button_value.to_sym == :cancel
-          send_message(payload: payload, message: 'Reservation canceled.')
+          send_message(payload: payload, message: t('messages.cancel'))
           session.clear
           return
         end
@@ -332,7 +336,7 @@ module Lita
           KenpoApi::Sport.apply_reservation(session.get(:url), reservation_data)
         end
 
-        send_message(payload: payload, message: 'I have received your application! Thank you!')
+        send_message(payload: payload, message: t('messages.complete'))
         session.clear
       end
 
@@ -356,43 +360,46 @@ module Lita
       end
 
       def show_menu(response)
+        source = Lita::Source.new(user: response.user, room: response.room)
+        robot.send_message(source, t('messages.info'))
+
         categories = KenpoApi::ServiceCategory.list
         options = categories.map{|category| compose_option(text: category.name, value: category.category_code)}
-        options << {text: 'Cancel', value: :cancel}
+        options << {text: t('words.cancel'), value: :cancel}
         attachment = compose_attachment_with_menu(
-          question: 'Choose the service to want.',
+          question: t('questions.menu'),
           callback_id: :category_selection,
           name: 'category',
           options: options,
         )
-        attachment = Lita::Adapters::Slack::Attachment.new('What service do you want?', attachment)
+        attachment = Lita::Adapters::Slack::Attachment.new(t('messages.menu'), attachment)
         robot.chat_service.send_attachments(response.room, attachment)
       end
 
       def show_resorts(session, payload)
         resort_names = KenpoApi::Resort.resort_names
         options = resort_names.map{|resort_name| compose_option(text: resort_name, value: resort_name)}
-        options << {text: 'Cancel', value: :cancel}
+        options << {text: t('words.cancel'), value: :cancel}
         attachment = compose_attachment_with_menu(
-          question: 'Choose resort to apply reservation for.',
+          question: t('questions.resort'),
           callback_id: :resort_selection,
           name: 'service_group',
           options: options,
         )
-        send_attachment(payload: payload, message: 'What resort do you want?', attachment: attachment)
+        send_attachment(payload: payload, message: t('messages.resort'), attachment: attachment)
       end
 
       def show_sports(session, payload)
         sport_names = KenpoApi::Sport.sport_names
         options = sport_names.map{|sport_name| compose_option(text: sport_name, value: sport_name)}
-        options << {text: 'Cancel', value: :cancel}
+        options << {text: t('words.cancel'), value: :cancel}
         attachment = compose_attachment_with_menu(
-          question: 'Choose sport facility to apply reservation for.',
+          question: t('questions.sport'),
           callback_id: :sport_selection,
           name: 'service_group',
           options: options,
         )
-        send_attachment(payload: payload, message: 'What sport facility do you want?', attachment: attachment)
+        send_attachment(payload: payload, message: t('messages.sport'), attachment: attachment)
       end
 
       def compose_resort_reservation_data(session)
@@ -459,7 +466,7 @@ module Lita
         }.to_json
       end
 
-      def compose_attachment_with_menu(question:, fallback:'Something wrong...', color:'#4083bc', callback_id:, name:, placeholder:'Choose...', options:[])
+      def compose_attachment_with_menu(question:, fallback:t('messages.fallback'), color:'#4083bc', callback_id:, name:, placeholder:t('messages.placeholder'), options:[])
         compose_attachment(question: question, fallback: fallback, color: color, callback_id: callback_id, actions: [
           {
             name: name,
@@ -477,7 +484,7 @@ module Lita
         }
       end
 
-      def compose_attachment_with_buttons(question:, fallback:'Something wrong...', color:'#4083bc', callback_id:, buttons:[])
+      def compose_attachment_with_buttons(question:, fallback:t('messages.fallback'), color:'#4083bc', callback_id:, buttons:[])
         compose_attachment(question: question, fallback: fallback, color: color, callback_id: callback_id, actions: buttons)
       end
 
@@ -491,7 +498,7 @@ module Lita
         }
       end
 
-      def compose_attachment(question:, fallback:'Something wrong...', color:'#4083bc', callback_id:, actions:[])
+      def compose_attachment(question:, fallback:t('messages.fallback'), color:'#4083bc', callback_id:, actions:[])
         {
           text: question,
           fallback: fallback,
