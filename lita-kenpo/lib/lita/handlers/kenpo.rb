@@ -221,7 +221,7 @@ module Lita
 
       def on_resort_select(session, payload)
         session.save(:service, payload.action_menu_value)
-        check_service_availability(session)
+        check_service_availability(session, payload.action_menu_value)
 
         case session.get(:service_category).to_sym
         when :resort_reserve
@@ -239,7 +239,7 @@ module Lita
 
       def on_sport_select(session, payload)
         session.save(:service, payload.action_menu_value)
-        check_service_availability(session)
+        check_service_availability(session, payload.action_menu_value)
 
         case session.get(:service_category).to_sym
         when :sport_reserve
@@ -252,10 +252,10 @@ module Lita
         session.clear
       end
 
-      def check_service_availability(session)
+      def check_service_availability(session, service_name)
         category = KenpoApi::ServiceCategory.find(session.get(:service_category).to_sym)
-        group = KenpoApi::ServiceGroup.find(category, session.get(:service))
-        raise t('messages.unavailable') unless group.available?
+        group = KenpoApi::ServiceGroup.find(category, service_name)
+        raise t('messages.unavailable') unless group&.available?
       end
 
       def go_to_next_step(session, body)
