@@ -3,7 +3,7 @@ Lita.configure do |config|
   config.robot.name = 'Kenpo Bot'
 
   # The locale code for the language to use.
-  # config.robot.locale = :en
+  config.robot.locale = 'ja-JP'
 
   # The severity of messages to log. Options are:
   # :debug, :info, :warn, :error, :fatal

@@ -2,3 +2,53 @@ en:
   lita:
     handlers:
       kenpo:
+        step_messages:
+          email:         'Input your email address to receive application url for.'
+          url:           'Check the email & Input the application url.'
+          sign_no:       'Input your sign number.'
+          insured_no:    'Input your insured number.'
+          office_name:   'Input your office name.'
+          kana_name:     'Input your name in Katakana.'
+          birth_year:    'Input your birth year.'
+          birth_month:   'Input your birth month.'
+          birth_day:     'Input your birth day of the month.'
+          gender:        'Input your gender.'
+          relationship:  'Input your relationship to the insured person.'
+          contact_phone: 'Input your phone number.'
+          postal_code:   'Input your postal code.'
+          state:         'Input your state.'
+          address:       'Input your address.'
+          join_time:     'Input join day.'
+          night_count:   'Input night count.'
+          stay_persons:  'Input staying person count.'
+          use_time_from: 'Input start time.'
+          use_time_to:   'Input end time.'
+          confirm:       'Are you sure to apply reservation?'
+        messages:
+          confirm:       'Are you sure to apply reservation?'
+          review:        'Review the application data below:'
+          complete:      'I have received your application! Thank you!'
+          menu:          'What service do you want?'
+          resort:        'What resort do you want?'
+          sport:         'What sport facility do you want?'
+          help:          "Try 'help' for a list of available commands."
+          invalid:       'Invalid input value.'
+          error:         'Something wrong. Please try again.'
+          expired:       'Session expired. Please start again!'
+          cancel:        'See you again!'
+          unavailable:   'Service unavailable.'
+          not_yet:       "This feature is not implemented yet. Please contribute to the development.\nhttps://github.com/tearoom6/bot_kenpo"
+          fallback:      'Something wrong...'
+          placeholder:   'Choose...'
+        questions:
+          menu:          'Choose the service to want.'
+          resort:        'Choose resort to apply reservation for.'
+          sport:         'Choose sport facility to apply reservation for.'
+        words:
+          choose:        'Choose'
+          refer_to:      'See'
+          ok:            'OK'
+          cancel:        'Cancel'
+        helps:
+          start:         'Show menu.'
+

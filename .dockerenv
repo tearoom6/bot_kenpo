@@ -1,4 +1,5 @@
 REDIS_HOST=redis
+LANG=ja-JP
 
 # Add the configs below into `.dockerenv.secrets`.
 #LITA_SLACK_TOKEN=
