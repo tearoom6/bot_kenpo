@@ -21,11 +21,29 @@ module Lita
         postal_code:   'Input your postal code.',
         state:         'Input your state.',
         address:       'Input your address.',
+        join_time:     'Input join day.',
+        night_count:   'Input night count.',
+        stay_persons:  'Input staying person count.',
+        confirm:       'Are you sure to apply reservation?',
       }
       SPORT_RESERVE_STEPS = {
-        email: 'Input your email address to receive application url for.',
-        url:   'Check the email & Input the application url.',
-        # TODO: - Not implemented.
+        email:         'Input your email address to receive application url for.',
+        url:           'Check the email & Input the application url.',
+        sign_no:       'Input your sign number.',
+        insured_no:    'Input your insured number.',
+        office_name:   'Input your office name.',
+        kana_name:     'Input your name in Katakana.',
+        birth_year:    'Input your birth year.',
+        birth_month:   'Input your birth month.',
+        birth_day:     'Input your birth day of the month.',
+        contact_phone: 'Input your phone number.',
+        postal_code:   'Input your postal code.',
+        state:         'Input your state.',
+        address:       'Input your address.',
+        join_time:     'Input join day.',
+        use_time_from: 'Input start time.',
+        use_time_to:   'Input end time.',
+        confirm:       'Are you sure to apply reservation?',
       }
 
       class Session
@@ -105,7 +123,12 @@ module Lita
           action['name']
         end
 
-        def action_value
+        def action_button_value
+          return nil unless action = @params['actions']&.first
+          action['value']
+        end
+
+        def action_menu_value
           return nil unless action = @params['actions']&.first
           return nil unless option = action['selected_options']&.first
           option['value']
@@ -119,18 +142,25 @@ module Lita
         user_id = message.source.user.id
         body = message.body
 
-        session = Session.session_for(redis: redis, user_id: user_id)
-        unless session.nil?
-          next_message = go_to_next_step(session, body)
-          if next_message.nil?
-            robot.send_message(message.source, 'I have received your application! Thank you!')
-          else
-            robot.send_message(message.source, next_message)
+        begin
+          session = Session.session_for(redis: redis, user_id: user_id)
+          unless session.nil?
+            next_message = go_to_next_step(session, body)
+            if next_message.nil?
+              robot.send_message(message.source, 'I have received your application! Thank you!')
+            elsif next_message.is_a?(Hash)
+              attachment = Lita::Adapters::Slack::Attachment.new('Are you sure to apply reservation?', next_message)
+              robot.chat_service.send_attachments(message.room_object, attachment)
+            else
+              robot.send_message(message.source, next_message)
+            end
+            return
           end
-          return
-        end
 
-        robot.send_message(message.source, "Try 'help' for a list of available commands.")
+          robot.send_message(message.source, "Try 'help' for a list of available commands.")
+        rescue
+          robot.send_message(message.source, 'Something wrong. Please try again.')
+        end
       end
 
       route(/^start$/i, :on_start, help: { 'start' => 'Show menu.' })
@@ -150,7 +180,7 @@ module Lita
           return
         end
 
-        if payload.action_value == 'cancel'
+        if payload.action_menu_value == 'cancel'
           send_message(payload: payload, message: 'See you again!')
           session.clear
           return
@@ -163,6 +193,8 @@ module Lita
           on_resort_select(session, payload)
         when :sport_selection
           on_sport_select(session, payload)
+        when :confirm
+          on_confirm(session, payload)
         end
       end
 
@@ -171,21 +203,21 @@ module Lita
       private
 
       def on_category_select(session, payload)
-        session.save(:service_category, payload.action_value)
+        session.save(:service_category, payload.action_menu_value)
 
-        case payload.action_value.to_sym
+        case payload.action_menu_value.to_sym
         when :resort_reserve, :resort_search_vacant
           show_resorts(session, payload)
         when :sport_reserve
           show_sports(session, payload)
         else
-          # TODO: - Not implemented.
           send_message(payload: payload, message: "This feature is not implemented yet. Please contribute to the development.\nhttps://github.com/tearoom6/bot_kenpo")
         end
       end
 
       def on_resort_select(session, payload)
-        session.save(:service, payload.action_value)
+        session.save(:service, payload.action_menu_value)
+        check_service_availability(session)
 
         case session.get(:service_category).to_sym
         when :resort_reserve
@@ -194,11 +226,16 @@ module Lita
           session.save(:step, step)
         when :resort_search_vacant
           # TODO: - Not implemented.
+          send_message(payload: payload, message: "This feature is not implemented yet. Please contribute to the development.\nhttps://github.com/tearoom6/bot_kenpo")
         end
+      rescue => e
+        send_message(payload: payload, message: e.message)
+        session.clear
       end
 
       def on_sport_select(session, payload)
-        session.save(:service, payload.action_value)
+        session.save(:service, payload.action_menu_value)
+        check_service_availability(session)
 
         case session.get(:service_category).to_sym
         when :sport_reserve
@@ -206,22 +243,97 @@ module Lita
           send_message(payload: payload, message: message)
           session.save(:step, step)
         end
+      rescue => e
+        send_message(payload: payload, message: e.message)
+        session.clear
+      end
+
+      def check_service_availability(session)
+        category = KenpoApi::ServiceCategory.find(session.get(:service_category).to_sym)
+        group = KenpoApi::ServiceGroup.find(category, session.get(:service))
+        raise 'Service unavailable.' unless group.available?
       end
 
       def go_to_next_step(session, body)
         service_category = session.get(:service_category).to_sym
         step = session.get(:step).to_sym
-        handle_step(service_category, step, session, body)
+        criteria = JSON.parse(session.get(:criteria)) rescue {}
+        handle_step(service_category, step, session, body, criteria)
 
         next_step, message = next_step(service_category, step)
         return nil if next_step.nil?
         session.save(:step, next_step)
+
+        if next_step == :confirm
+          return compose_attachment_with_buttons(question:'Review the application data below:', callback_id: :review, buttons:[
+            compose_button(name: :ok,     text: 'OK',     value: :ok,     style: :danger),
+            compose_button(name: :cancel, text: 'Cancel', value: :cancel, style: :default),
+          ])
+        end
+
+        if next_criteria = criteria[next_step]
+          message += "\nChoise: #{next_criteria.to_s}"
+        end
+        if next_step == :state
+          message += "\nSee: http://nlftp.mlit.go.jp/ksj/gml/codelist/PrefCd.html"
+        end
         message
       end
 
-      def handle_step(service_category, step, session, body)
-        # TODO: - Not implemented.
+      def handle_step(service_category, step, session, body, criteria)
+        if step_criteria = criteria[step]
+          raise 'Invalid input value.' unless step_criteria.include?(body)
+        end
+
+        case step
+        when :email
+          handle_email_step(session, service_category, body)
+        when :url
+          handle_url_step(session, service_category, body)
+        end
+
         session.save(step, body)
+      end
+
+      def handle_email_step(session, service_category, email)
+        case service_category.to_sym
+        when :resort_reserve
+          KenpoApi::Resort.request_reservation_url(resort_name: session.get(:service), email: email)
+        when :sport_reserve
+          KenpoApi::Sport.request_reservation_url(sport_name: session.get(:service), email: email)
+        end
+      end
+
+      def handle_url_step(session, service_category, url)
+        criteria =
+          case service_category.to_sym
+          when :resort_reserve
+            KenpoApi::Resort.check_reservation_criteria(url, type: :lottery)
+          when :sport_reserve
+            KenpoApi::Sport.check_reservation_criteria(url)
+          end
+
+        session.save(:criteria, criteria.to_json)
+      end
+
+      def on_confirm(session, payload)
+        if payload.action_button_value.to_sym == :cancel
+          send_message(payload: payload, message: 'Reservation canceled.')
+          session.clear
+          return
+        end
+
+        case session.get(:service_category).to_sym
+        when :resort_reserve
+          reservation_data = compose_resort_reservation_data(session)
+          KenpoApi::Resort.apply_reservation(session.get(:url), reservation_data, type: :lottery)
+        when :sport_reserve
+          reservation_data = compose_sport_reservation_data(session)
+          KenpoApi::Sport.apply_reservation(session.get(:url), reservation_data)
+        end
+
+        send_message(payload: payload, message: 'I have received your application! Thank you!')
+        session.clear
       end
 
       def next_step(service_category, current_step)
@@ -281,6 +393,51 @@ module Lita
           options: options,
         )
         send_attachment(payload: payload, message: 'What sport facility do you want?', attachment: attachment)
+      end
+
+      def compose_resort_reservation_data(session)
+        data = session.get_all
+        {
+          sign_no:       data['sign_no'],
+          insured_no:    data['insured_no'],
+          office_name:   data['office_name'],
+          kana_name:     data['kana_name'],
+          birth_year:    data['birth_year'],
+          birth_month:   data['birth_month'],
+          birth_day:     data['birth_day'],
+          gender:        data['gender'],
+          relationship:  data['relationship'],
+          contact_phone: data['contact_phone'],
+          postal_code:   data['postal_code'],
+          state:         data['state'],
+          address:       data['address'],
+          join_time:     data['join_time'],
+          night_count:   data['night_count'],
+          stay_persons:  data['stay_persons'],
+          room_persons:  data['stay_persons'],
+          meeting_dates: nil,
+          must_meeting:  false,
+        }
+      end
+
+      def compose_sport_reservation_data(session)
+        data = session.get_all
+        {
+          sign_no:       data['sign_no'],
+          insured_no:    data['insured_no'],
+          office_name:   data['office_name'],
+          kana_name:     data['kana_name'],
+          birth_year:    data['birth_year'],
+          birth_month:   data['birth_month'],
+          birth_day:     data['birth_day'],
+          contact_phone: data['contact_phone'],
+          postal_code:   data['postal_code'],
+          state:         data['state'],
+          address:       data['address'],
+          join_time:     data['join_time'],
+          use_time_from: data['use_time_from'],
+          use_time_to:   data['use_time_to'],
+        }
       end
 
       def send_attachment(payload:, message:, attachment:)
