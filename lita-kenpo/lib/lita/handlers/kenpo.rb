@@ -204,6 +204,19 @@ module Lita
       http.post '/slack/redirect/*', :on_redirect
       def on_redirect(rack_request, rack_response)
         log << "on_redirect called: #{rack_request.params}\n"
+
+        if error = rack_request.params['error']
+          log << "Error returned: #{error}\n"
+          return
+        end
+
+        message_body = {
+          client_id:     ENV['SLACK_CLIENT_ID'],
+          client_secret: ENV['SLACK_CLIENT_SECRET'],
+          code:          rack_request.params['code'],
+        }
+        response = http.post('https://slack.com/api/oauth.access', message_body, {'Content-Type' => 'application/x-www-form-urlencoded'})
+        log << "oauth.access response: #{response.body}\n"
       end
 
       Lita.register_handler(self)
