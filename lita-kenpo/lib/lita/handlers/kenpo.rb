@@ -201,7 +201,7 @@ module Lita
         end
       end
 
-      http.post '/slack/redirect/*', :on_redirect
+      http.get '/slack/redirect/*', :on_redirect
       def on_redirect(rack_request, rack_response)
         log << "on_redirect called: #{rack_request.params}\n"
 
