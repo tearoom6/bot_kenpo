@@ -218,6 +218,9 @@ module Lita
         response = http.post('https://slack.com/api/oauth.access', message_body, {'Content-Type' => 'application/x-www-form-urlencoded'})
         log << "oauth.access response: #{response.body}\n"
 
+        # TODO: - Need to start another thread or process using access token in the response to start RTM with another room. It might need Lita's support.
+        # See: https://github.com/litaio/lita/issues/150
+
         rack_response.redirect('https://github.com/tearoom6/bot_kenpo')
       end
 
