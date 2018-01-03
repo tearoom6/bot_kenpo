@@ -217,6 +217,8 @@ module Lita
         }
         response = http.post('https://slack.com/api/oauth.access', message_body, {'Content-Type' => 'application/x-www-form-urlencoded'})
         log << "oauth.access response: #{response.body}\n"
+
+        rack_response.redirect('https://github.com/tearoom6/bot_kenpo')
       end
 
       Lita.register_handler(self)
