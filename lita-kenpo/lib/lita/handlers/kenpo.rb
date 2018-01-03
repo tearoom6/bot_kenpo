@@ -201,9 +201,27 @@ module Lita
         end
       end
 
-      http.post '/slack/redirect/*', :on_redirect
+      http.get '/slack/redirect/*', :on_redirect
       def on_redirect(rack_request, rack_response)
         log << "on_redirect called: #{rack_request.params}\n"
+
+        if error = rack_request.params['error']
+          log << "Error returned: #{error}\n"
+          return
+        end
+
+        message_body = {
+          client_id:     ENV['SLACK_CLIENT_ID'],
+          client_secret: ENV['SLACK_CLIENT_SECRET'],
+          code:          rack_request.params['code'],
+        }
+        response = http.post('https://slack.com/api/oauth.access', message_body, {'Content-Type' => 'application/x-www-form-urlencoded'})
+        log << "oauth.access response: #{response.body}\n"
+
+        # TODO: - Need to start another thread or process using access token in the response to start RTM with another room. It might need Lita's support.
+        # See: https://github.com/litaio/lita/issues/150
+
+        rack_response.redirect('https://github.com/tearoom6/bot_kenpo')
       end
 
       Lita.register_handler(self)

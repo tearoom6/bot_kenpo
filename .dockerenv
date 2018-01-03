@@ -3,3 +3,5 @@ LANG=ja-JP
 
 # Add the configs below into `.dockerenv.secrets`.
 #LITA_SLACK_TOKEN=
+#SLACK_CLIENT_ID=
+#SLACK_CLIENT_SECRET=
