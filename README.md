@@ -20,6 +20,16 @@ $ bundle exec foreman start
 $ docker-compose up -d
 ```
 
+### Configurations
+
+> .dockerenv.secrets
+
+```
+LITA_SLACK_TOKEN=<LITA_SLACK_INTEGRATION_TOKEN>
+```
+
+Set the environment variable above in the production env.
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/tearoom6/bot_kenpo.
